@@ -143,6 +143,119 @@ export default function WeddingInvitation() {
     );
   }
 
+  function ScratchReveal({ onReveal }: { onReveal?: () => void }) {
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const isDrawing = useRef(false);
+
+    useEffect(() => {
+      const container = containerRef.current;
+      const canvas = canvasRef.current;
+      if (!container || !canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      function resize() {
+        const rect = container.getBoundingClientRect();
+        canvas.width = Math.max(1, Math.floor(rect.width * devicePixelRatio));
+        canvas.height = Math.max(1, Math.floor(rect.height * devicePixelRatio));
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+        ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+        drawOverlay();
+      }
+
+      function drawOverlay() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // warm metallic overlay with subtle sheen
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, "#efe3d4");
+        grad.addColorStop(1, "#f4e6d6");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // gentle noise for texture (kept light so underlying text shows through when scratched)
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = "rgba(0,0,0,0.02)";
+        for (let i = 0; i < 1200; i++) {
+          ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 1, 1);
+        }
+      }
+
+      function getPos(e: PointerEvent) {
+        const rect = canvas.getBoundingClientRect();
+        return { x: (e.clientX - rect.left) * devicePixelRatio, y: (e.clientY - rect.top) * devicePixelRatio };
+      }
+
+      function erase(x: number, y: number) {
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.beginPath();
+        ctx.arc(x, y, 40 * devicePixelRatio, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalCompositeOperation = "source-over";
+      }
+
+      function onDown(e: PointerEvent) {
+        isDrawing.current = true;
+        (e.target as Element).setPointerCapture(e.pointerId);
+        const p = getPos(e);
+        erase(p.x, p.y);
+      }
+
+      function onMove(e: PointerEvent) {
+        if (!isDrawing.current) return;
+        const p = getPos(e);
+        erase(p.x, p.y);
+      }
+
+      function onUp(e: PointerEvent) {
+        isDrawing.current = false;
+        try { (e.target as Element).releasePointerCapture(e.pointerId); } catch {};
+        // If a large portion is cleared, call onReveal
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let cleared = 0;
+        for (let i = 3; i < imageData.length; i += 4) {
+          if (imageData[i] === 0) cleared++;
+        }
+        const ratio = cleared / (canvas.width * canvas.height);
+        if (ratio > 0.1 && onReveal) onReveal();
+      }
+
+      resize();
+      window.addEventListener("resize", resize);
+      canvas.addEventListener("pointerdown", onDown);
+      canvas.addEventListener("pointermove", onMove);
+      canvas.addEventListener("pointerup", onUp);
+      canvas.addEventListener("pointerleave", onUp);
+
+      return () => {
+        window.removeEventListener("resize", resize);
+        canvas.removeEventListener("pointerdown", onDown);
+        canvas.removeEventListener("pointermove", onMove);
+        canvas.removeEventListener("pointerup", onUp);
+        canvas.removeEventListener("pointerleave", onUp);
+      };
+    }, [onReveal]);
+
+    function revealAll() {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (onReveal) onReveal();
+    }
+
+    return (
+      <div ref={containerRef} className="scratch-container absolute inset-0">
+        <canvas ref={canvasRef} className="scratch-canvas" />
+        <button type="button" className="scratch-reveal" onClick={revealAll} aria-label="Reveal date">
+          Reveal
+        </button>
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-ivory text-ink">
       <audio ref={audioRef} src="/audio/wedding-theme.mp3" loop preload="metadata" />
@@ -156,17 +269,14 @@ export default function WeddingInvitation() {
             transition={{ duration: 1.15, ease: [0.16, 1, 0.3, 1] }}
           >
             <motion.div
-              className="absolute inset-0"
-              animate={reduceMotion ? undefined : { scale: [1.03, 1.1] }}
-              transition={{ duration: 16, ease: "easeOut", repeat: Infinity, repeatType: "reverse" }}
+              className="absolute inset-0 flex items-center justify-center"
+              animate={reduceMotion ? undefined : { scale: [1.01, 1.03] }}
+              transition={{ duration: 18, ease: "easeOut", repeat: Infinity, repeatType: "reverse" }}
             >
-              <Image
+              <img
                 src="/images/hero-photo.jpg"
                 alt="Pravitha P V and Abhijith Roy"
-                fill
-                priority
-                sizes="100vw"
-                className="object-cover object-center"
+                className="max-h-screen w-auto object-contain object-center"
               />
             </motion.div>
             <div className="absolute inset-0 bg-gradient-to-b from-ivory/20 via-ivory/42 to-rosewood/78" />
@@ -227,19 +337,20 @@ export default function WeddingInvitation() {
         </button>
       ) : null}
 
-      <section className="hero-film relative min-h-screen overflow-hidden bg-ivory text-rosewood">
-        <motion.div
-          className="absolute inset-0"
-          animate={reduceMotion ? undefined : { scale: [1, 1.085] }}
-          transition={{ duration: 20, ease: "easeOut", repeat: Infinity, repeatType: "reverse" }}
-        >
-          <Image
+      <section className={`hero-film relative min-h-screen overflow-hidden bg-ivory text-rosewood ${isOpen ? "kerala-theme" : ""}`}>
+        <motion.div className="absolute inset-0 overflow-hidden">
+          <motion.img
             src="/images/hero-photo.jpg"
             alt="Pravitha P V and Abhijith Roy"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center"
+            className="max-h-[88vh] w-auto object-contain object-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            animate={
+              reduceMotion
+                ? undefined
+                : isOpen
+                ? { x: "18vw", scale: 0.88, opacity: 0.98 }
+                : { x: 0, scale: 1, opacity: 1 }
+            }
+            transition={{ duration: 0.85, ease: [0.2, 0.8, 0.2, 1] }}
           />
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-ivory/5 via-ivory/20 to-ivory/95" />
@@ -257,14 +368,17 @@ export default function WeddingInvitation() {
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.38em] text-roseGold">
               A Wedding Film Invitation
             </p>
-            <h1 className="hero-title font-display font-semibold leading-none text-rosewood text-5xl sm:text-6xl lg:text-7xl xl:text-8xl">
+            <h1 className="hero-title font-display text-rosewood">
               Pravitha P V
               <span className="block py-2 text-champagneGold">&</span>
               Abhijith Roy
             </h1>
-            <p className="mt-6 max-w-md font-display text-3xl text-roseGold sm:text-4xl">
-              {wedding.weddingDate}
-            </p>
+            <div className="mt-6 max-w-md font-display text-3xl text-roseGold sm:text-4xl relative">
+              <div className="scratch-text relative z-10 text-center font-display text-3xl sm:text-4xl">
+                {wedding.weddingDate}
+              </div>
+              <ScratchReveal onReveal={() => { /* optional callback */ }} />
+            </div>
             <p className="mt-4 max-w-md text-base leading-8 text-ink/72">
               A blush-toned celebration of love, family, and the beautiful beginning of forever.
             </p>
@@ -313,10 +427,10 @@ export default function WeddingInvitation() {
         <div className="story-cinema">
           <motion.div
             className="story-photo"
-            initial={{ opacity: 0, scale: 0.96, y: 28 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0.6, scale: 0.96, y: 12 }}
+            animate={reduceMotion ? undefined : isOpen ? { opacity: 1, scale: 1.02, x: -36 } : { opacity: 0.9, scale: 1, x: 0 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           >
             <Image
               src="/images/story-photo.jpg"
@@ -343,21 +457,38 @@ export default function WeddingInvitation() {
       </Section>
 
       <Section title="The Proposal" eyebrow="22 June 2021" className="proposal-section">
-        <div className="proposal-film">
-          <Image
-            src="/images/proposal-photo.jpg"
-            alt="A cinematic proposal moment of Pravitha P V and Abhijith Roy"
-            fill
-            sizes="100vw"
-            className="object-cover object-center"
-          />
-          <div className="proposal-overlay" />
+        <div className="proposal-film relative overflow-hidden">
+          <motion.div
+            className="proposal-media absolute inset-0 flex items-center justify-end"
+            initial={{ opacity: 0.9, scale: 1 }}
+            animate={
+              reduceMotion
+                ? undefined
+                : isOpen
+                ? { opacity: 1, scale: 1.16, x: '-10vw' }
+                : { opacity: 0.98, scale: 1, x: 0 }
+            }
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            style={{ zIndex: 5 }}
+          >
+            <div className="proposal-media-inner w-[75%] max-w-none h-[92%] relative mr-12 rounded-lg overflow-hidden shadow-glow">
+              <Image
+                src="/images/proposal-photo.jpg"
+                alt="A cinematic proposal moment of Pravitha P V and Abhijith Roy"
+                fill
+                sizes="(min-width: 1100px) 48vw, 90vw"
+                className="object-cover object-right"
+              />
+            </div>
+          </motion.div>
+          <div className={`proposal-overlay ${isOpen ? 'overlay-light' : 'overlay-dark'}`} style={{ zIndex: 3 }} />
           <motion.div
             initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            animate={isOpen ? { opacity: 1, y: 0 } : undefined}
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="proposal-copy"
+            style={{ zIndex: 6 }}
           >
             <p className="text-xs font-bold uppercase tracking-[0.32em] text-champagneGold">
               A New Chapter
