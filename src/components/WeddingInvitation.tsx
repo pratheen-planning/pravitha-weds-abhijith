@@ -76,7 +76,12 @@ export default function WeddingInvitation() {
   const reduceMotion = useReducedMotion();
   const [isOpen, setIsOpen] = useState(false);
   const [musicOn, setMusicOn] = useState(false);
-  const [countdown, setCountdown] = useState<Countdown>(() => getCountdown());
+  const [countdown, setCountdown] = useState<Countdown>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
   const [invitationOpen, setInvitationOpen] = useState(false);
   const [blessings, setBlessings] = useState(() =>
     wedding.blessingOptions.map((label, index) => ({
@@ -97,8 +102,13 @@ export default function WeddingInvitation() {
   );
 
   useEffect(() => {
-    const timer = window.setInterval(() => setCountdown(getCountdown()), 1000);
-    return () => window.clearInterval(timer);
+    setCountdown(getCountdown());
+
+    const timer = setInterval(() => {
+      setCountdown(getCountdown());
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -247,7 +257,7 @@ export default function WeddingInvitation() {
             <p className="mb-4 text-xs font-bold uppercase tracking-[0.38em] text-roseGold">
               A Wedding Film Invitation
             </p>
-            <h1 className="hero-title font-display font-semibold leading-none text-rosewood">
+            <h1 className="hero-title font-display font-semibold leading-none text-rosewood text-5xl sm:text-6xl lg:text-7xl xl:text-8xl">
               Pravitha P V
               <span className="block py-2 text-champagneGold">&</span>
               Abhijith Roy

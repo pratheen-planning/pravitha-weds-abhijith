@@ -88,8 +88,8 @@ a:focus-visible {
 }
 
 .hero-title {
-  font-size: clamp(4rem, 16vw, 9rem);
-  text-shadow: 0 18px 52px rgba(255, 249, 241, 0.78);
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  line-height: 0.9;
 }
 
 .intro-copy {
@@ -314,12 +314,7 @@ a:focus-visible {
 }
 
 .proposal-film {
-  position: relative;
-  min-height: min(78vh, 48rem);
-  overflow: hidden;
-  border: 1px solid rgba(200, 164, 93, 0.3);
-  border-radius: 1rem;
-  box-shadow: 0 30px 90px rgba(95, 49, 50, 0.18);
+  min-height: 650px;
 }
 
 .proposal-overlay {
