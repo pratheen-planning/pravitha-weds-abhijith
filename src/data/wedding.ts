@@ -8,6 +8,9 @@ export const wedding = {
   venueName: "N.S.S Auditorium",
   venueLines: ["Mundankavu, Kallissery", "Chengannur, Kerala"],
   mapUrl: "https://maps.app.goo.gl/xxybZRDgG1Vy1GF86",
+  reception: "Followed by lunch at the venue",
+  dressCode: "Traditional Elegance",
+  quote: ["Every love story is beautiful,", "but ours is our favorite."],
   rsvp: {
     bride: "+91 9061134884",
     groom: "+91 9847110017",
@@ -48,5 +51,32 @@ export const wedding = {
     "\u{1F389} Congratulations",
     "\u{1F339} Best Wishes",
     "\u{1F48D} Forever Together"
+  ],
+  couple: {
+    bride: {
+      name: "Pravitha P V",
+      role: "The Bride",
+      photo: "/images/story-photo.jpg",
+      note: "Grace, warmth, and a smile that lights up every room."
+    },
+    groom: {
+      name: "Abhijith Roy",
+      role: "The Groom",
+      photo: "/images/proposal-photo.jpg",
+      note: "Kind, steadfast, and endlessly devoted."
+    }
+  },
+  // Masonry gallery: existing couple photos + curated royalty-free decor.
+  gallery: [
+    { src: "/images/hero-photo.jpg", alt: "Pravitha and Abhijith dancing", span: "tall" },
+    { src: "/images/gallery/white-roses.jpg", alt: "White roses", span: "wide" },
+    { src: "/images/story-photo.jpg", alt: "Portrait of Pravitha and Abhijith", span: "normal" },
+    { src: "/images/gallery/rings.jpg", alt: "Wedding rings", span: "normal" },
+    { src: "/images/gallery/cherry-blossom.jpg", alt: "Cherry blossoms", span: "tall" },
+    { src: "/images/proposal-photo.jpg", alt: "The proposal moment", span: "normal" },
+    { src: "/images/gallery/candles.jpg", alt: "Candles and warm light", span: "normal" },
+    { src: "/images/gallery/fairy-lights.jpg", alt: "Fairy lights bokeh", span: "wide" },
+    { src: "/images/gallery/pink-roses.jpg", alt: "Pink roses bouquet", span: "tall" },
+    { src: "/images/gallery/floral-arch.jpg", alt: "Floral wedding arch", span: "normal" }
   ]
 } as const;

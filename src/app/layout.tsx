@@ -1,5 +1,33 @@
 import type { Metadata, Viewport } from "next";
+import { Playfair_Display, Cormorant_Garamond, Poppins, Inter } from "next/font/google";
 import "./globals.css";
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-playfair",
+  display: "swap"
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-cormorant",
+  display: "swap"
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-poppins",
+  display: "swap"
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap"
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://pravithawedsabhijith.in"),
@@ -53,7 +81,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-IN">
+    <html
+      lang="en-IN"
+      className={`${playfair.variable} ${cormorant.variable} ${poppins.variable} ${inter.variable}`}
+    >
       <body>{children}</body>
     </html>
   );
